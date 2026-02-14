@@ -1,9 +1,9 @@
 /*
 * [utils/helpers/index.js] - Helper utility functions used around the project.
 */
-const stream = require('stream');
-const presence = require('../presence');
-const constants = require('../constants');
+const stream = require('node:stream');
+const presence = require('./presence');
+const constants = require('./constants');
 const {headers, defaultUserAgent} = constants;
 
 const getRandom = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -95,6 +95,13 @@ function makeParsable(html) {
   return "[" + maybeMultipleObjects.join("},{") + "]";
 }
 
+/**
+ * Extract substring between a string.
+ * @param {string} str 
+ * @param {string} startToken 
+ * @param {string} endToken 
+ * @returns 
+ */
 function extractSubstringBetween(str, startToken, endToken) {
   const start = str.indexOf(startToken);
   if (start === -1) return "";

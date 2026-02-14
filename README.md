@@ -15,47 +15,37 @@
 4. adapters.js     ← callback / promise
 ```
 
+# Event-Driven
 ```js
-const MyLibrary = (() => {
-  const privateMethod = Symbol('privateMethod');
+// sample
+const login = require('axera-fca').events;
+
+// attach login listener
+login.on("login:success", ({ api }) => {
+  console.log("Ready");
   
-  function MyLibrary() {
-    this.data = 'Some public data';
-  }
+  //extend bot logic from here
+});
 
-  // Private method
-  MyLibrary.prototype[privateMethod] = function() {
-    console.log('This is a private method!');
-  };
-
-  // Public method to access the private method
-  MyLibrary.prototype.callPrivateMethod = function() {
-    this[privateMethod]();  // Access private method using the symbol
-  };
-
-  return MyLibrary;
-})();
-
-// Usage
-const lib = new MyLibrary();
-lib.callPrivateMethod();  // This is a private method!
-
-// The following line would throw an error because privateMethod is not accessible directly
-// lib[privateMethod]();  // Error: lib[privateMethod] is not a function
+// start login process
+login.start(cookie);
 ```
+# Async/Await
 ```js
-const passwordSymbol = Symbol('password');
+// sample 2
+const login = require('axera-fca').async;
 
-const userCredentials = {
-  username: 'alice',
-  [passwordSymbol]: 'superSecretPassword',
-};
+async function main() {
+  const api = await login.start(cookie);
+  //extend bot logic from here
+}
+```
+# Callback
+```js
+// sample 3
+const login = require('axera-fca').callback;
 
-console.log(userCredentials.username);  // 'alice'
-
-// Trying to access the password using the symbol (external code would need to know this)
-console.log(userCredentials[passwordSymbol]);  // 'superSecretPassword'
-
-// But external code can’t get the password through normal means:
-console.log(Object.keys(userCredentials));  // [ 'username' ]
+login.start(cookie, async function callback(error, api) {
+  // extend bot logic from here
+});
 ```
