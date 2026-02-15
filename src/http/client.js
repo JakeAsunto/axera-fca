@@ -31,8 +31,8 @@ const sharedAgentsCache = Symbol('sharedAgentsCache');
 class HttpClient {
   /** @type {Map<string, { http: import('http').Agent, https: import('https').Agent }>} */
   static [sharedAgentsCache];
-  /** @type {import('axios').AxiosInstance}*/
-  [axiosClient];
+  /** @type {import('axios').AxiosInstance|null}*/
+  [axiosClient] = null;
   #jar;
   
   

@@ -102,6 +102,11 @@ class LoginHelpers {
     return (primaryProfile ? primaryProfile : secondaryProfile) || null;
   }
   
+  /**
+   * Get irisSeqID from HTML
+   * @param {string} html 
+   * @returns {string | null}
+   */
   static getIrisSeqID(html) {
     const irisSeqIDMatch = html.match(/irisSeqID:"(.+?)"/);
     return irisSeqIDMatch ? irisSeqIDMatch[1] : null;
@@ -169,7 +174,7 @@ class LoginHelpers {
     }
     
     if (this.isCheckpoint(html)) {
-      utils.warn("login", "Checkpoint detected. Please log in with a browser to verify.");
+      console.warn("login", "Checkpoint detected. Please log in with a browser to verify.");
       throw new Error("FB Checkpoint detected");
     }
     
@@ -183,22 +188,17 @@ class LoginHelpers {
     if (!region) {
       const regions = ["prn", "pnb", "vll", "hkg", "sin", "ftw", "ash"];
       region = regions[Math.floor(Math.random() * regions.length)].toUpperCase();
-      utils.warn("No MQTT region is found from this account, now using random region. This might raise API suspicions.");
+      console.warn("No MQTT region is found from this account, now using random region. This might raise API suspicions.");
     }
     
     const mqttEndpoint = `wss://edge-chat.messenger.com/chat?region=${region}${identities.clientID ? `&cid=${clientID}` : ''}&sid=${sessionID}`;
-    
-    utils.log("MQTT Region:", region);
-    utils.log("MQTT Endpoint:", mqttEndpoint);
-    utils.log("MQTT Session ID:", sessionID);
-    utils.log("MQTT Web Client ID:", clientID);
-    utils.log("MQTT Web Device ID:", deviceID);
     
     return {
       mqttEndpoint,
       region,
       
       userID,
+      deviceID,
       clientID,
       sessionID,
       lastSeqId: irisSeqID,
@@ -220,6 +220,14 @@ class LoginHelpers {
     }
   }
   
+  /**
+   * Creates an instance of ApiClient.
+   * @param {HttpClient} httpClient - The HTTP client instance.
+   * @param {string} html - The HTML content.
+   * @param {string} userID - The user ID.
+   * @param {import('../types').UserSessionContext} sessionContext - The user session context.
+   * @returns {Promise<import('../types').ApiClient>} - The created ApiClient instance.
+   */
   static async createApiClient({ httpClient, html, userID, sessionContext }) {
     if (!httpClient || !html || !userID || !sessionContext) {
       throw new Error("httpClient, html, userID, and sessionContext are required");

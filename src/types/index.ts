@@ -1,6 +1,7 @@
 import type { AxiosResponse } from 'axios';
 import type { CookieJar } from 'tough-cookie';
 import type OperationClass from '../core/operation'
+import type ApiClientClass from '../http/apiClient';
 
 /**
  * The parameters required for Facebook internal API requests.
@@ -92,3 +93,42 @@ export type HttpClientResponse = {
   url: AxiosResponse['config']['url'],
   method: AxiosResponse['config']['method'],
 }
+
+export type EventBusOptions = {
+  observability: boolean;
+}
+
+export interface ApiRegistry {
+  API: Readonly<{
+    [x: string]: () => Promise<any> | (() => {});
+  } | {}>;
+}
+
+export interface LoginFlow {
+  API: ApiRegistry['API'];
+}
+
+export type FB_ACCOUNT_DTSG = { [userID: string]: { fb_dtsg: string, jazoest: string } };
+
+export interface UserSessionContext {
+  mqttEndpoint: string | null,
+  region: string | null,
+  userID: string | null,
+  deviceID: string | null,
+  clientID: string | null,
+  sessionID: string | null,
+  lastSeqId: string | null,
+  jar: import('tough-cookie').CookieJar,
+  firstListen: boolean | true,
+  loggedIn: boolean | true,
+  access_token: string | "NONE",
+  clientMutationId: number | 0,
+  mqttClient: undefined,
+  syncToken: undefined,
+  wsReqNumber: number | 0,
+  wsTaskNumber: number | 0,
+  reqCallbacks: Record<string, any>,
+  dtsgResult: FB_ACCOUNT_DTSG,
+};
+
+export type ApiClient = ApiClientClass;

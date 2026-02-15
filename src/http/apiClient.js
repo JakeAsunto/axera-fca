@@ -3,6 +3,8 @@ const { HttpClient } = require("./client");
 
 /**
  * @typedef {import('../types/index').FBApiParams} FBApiParams
+ * @typedef {import('../types/index').ApiClient} ApiClient
+ * @typedef {import('../types/index').SessionContext} 
  */
 
 class ApiClient {
@@ -74,7 +76,7 @@ class ApiClient {
 
   /**
    * 
-   * @param {{ url: string, jar: import('tough-cookie').CookieJar, query: object, }} getOptions
+   * @param {{ url: string, jar: import('tough-cookie').CookieJar, query: object, context: object, additionalHeaders: object }} getOptions
    * @returns 
    */
   get({ url, jar, query, context, additionalHeaders } = {}) {

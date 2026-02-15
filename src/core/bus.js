@@ -1,13 +1,49 @@
+/**
+ * Copyright 2026 Axera Team. All rights reserved.
+ * @author Axera Team (https://github.com/JakeAsunto/axera-fca)
+ */
 "use strict";
 const { EventEmitter } = require("events");
 
 /**
- * @template {Record<string, EventBus>} T
+ * @copyright Axera Team (https://github.com/JakeAsunto/axera-fca)
+ * @template {Record<string, import('../types').EventDomain>} EventDomains
+ * @template {Record<string, import('../types').EventBusOptions>} EventBusSettings
  */
+ 
+
+ /**
+  * The Event Bus where all events of the application flow.
+  * @example
+  * ```js
+  * const bus = new EventBus({ observability: false });
+  * bus.on('login.event', () => {});
+  * bus.emit('login.event', { user: 'Jake Dev' });
+  * 
+  * // Create a new domain
+  * bus.createDomain('user');
+  * bus.user.on('login', () => {});
+  * bus.user.emit('login', { user: 'Jake Dev' });
+  * 
+  * // Turn on observability (for debugging only, can cause performance issues in production)
+  * bus.enableObservability();
+  * 
+  * // Listen for all events
+  * bus.onAny((eventPayload) => {
+  *   console.log(`Event ${eventPayload.name} emitted with data:`, eventPayload);
+  * });
+  * 
+  * // Turn off observability
+  * bus.disableObservability();
+  * ```
+  * 
+  * @author Axera Team (https://github.com/JakeAsunto/axera-fca)
+  * @copyright Axera Team
+  */
 class EventBus extends EventEmitter {
   #history = new Map();
   #eventNames = new Map();
-  /** @type {T} */
+  /** @type {EventDomains} */
   #domains = Object.create(null);
   
   /**
@@ -22,12 +58,20 @@ class EventBus extends EventEmitter {
 
   /**
    * Create a new event bus instance.
-   * @type {EventBus}
+   * @type {EventBus<EventBusSettings>}
    */
   constructor({ observability = false } = {}) {
     super();
     this.setMaxListeners(50);
     this.observability = observability;
+  }
+  
+  enableObservability() {
+    this.observability = true;
+  }
+  
+  disableObservability() {
+    this.observability = false;
   }
 
   /**
@@ -203,6 +247,10 @@ class EventBus extends EventEmitter {
   }
 }
 
+/**
+ * A child domain of the Event Bus
+ * @author Axera Team (https://github.com/JakeAsunto/axera-fca)
+ */
 class EventDomain {
   #bus;
   /**
@@ -230,7 +278,7 @@ class EventDomain {
 
   /**
    * Emit an event within this bus domain.
-   * @param {string} event 
+   * @param {`${eventName}`} event 
    * @param  {...any} args 
    * @returns {boolean}
    */

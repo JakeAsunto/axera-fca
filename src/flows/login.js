@@ -26,6 +26,7 @@ class LoginFlow {
   #jar;
   #operation;
   #fcaOptions;
+  /** @type {import("../types").UserSessionContext} */
   #userSessionContext;
   
   #httpClient;
@@ -38,8 +39,10 @@ class LoginFlow {
    * @param {Error & { name: string, critical: boolean }} err
    */
   static errorHandler(err) {
-    err.name = "LoginError";
-    err.critical = true;
+    if (err instanceof Error) {
+      err.name = "LoginError";
+      err.critical = true;
+    }
     throw err;
   }
   
@@ -85,19 +88,32 @@ class LoginFlow {
     return html;
   }
   
+  /**
+   * Build user session context from the flow.
+   * @param {string} html 
+   * @param {import('tough-cookie').CookieJar} jar 
+   */
   async #buildSessionContext(html, jar) {
-    return await LoginHelpers.buildSessionContext(html, jar);
+    const sessionContext = await LoginHelpers.buildSessionContext(html, jar);
+    this.#setSessionContext(sessionContext);
+    return sessionContext;
   }
   
+  /**
+   * Create the API client that will be used by the FCA functions.
+   * @param {string} html 
+   * @param {import('../types').UserSessionContext} sessionContext
+   */
   async #createAPIClient(html, sessionContext) {
-    return await LoginHelpers.createApiClient({ httpClient: this.#httpClient, html, userID, sessionContext });
+    return await LoginHelpers.createApiClient({
+      httpClient: this.#httpClient,
+      html,
+      userID: this.#userSessionContext.userID,
+      sessionContext
+    });
   }
   
-  setSessionContext(ctx) {
-    this.#userSessionContext = ctx;
-  }
-  
-  loadAPIFunctions(apiClient, apiCollectionPath) {
+  #loadAPIFunctions(apiClient, apiCollectionPath) {
     if (!apiClient) {
       throw new Error("API client is missing in this FCA. Possible reasons include incorrect configuration or missing dependencies.");
     }
@@ -132,6 +148,14 @@ class LoginFlow {
     this.api = this.#apiRegistry.expose(); // refresh surface
   }
   
+  /**
+   * Set user session context to the flow.
+   * @param {import('../types').UserSessionContext} sessionContext
+   */
+  #setSessionContext(sessionContext) {
+    this.#userSessionContext = sessionContext;
+  }
+  
   addAPI(name, fn) {
     // It is in memory for now but will be persisted to disk later
     // This is made so hooking into the API is easier
@@ -159,6 +183,7 @@ class LoginFlow {
     }
   }
 
+  /** @param {EventBus | EventDomain} bus */
   async #startLoginProcess(bus) {
     const op = this.#operation;
     try {
@@ -182,36 +207,49 @@ class LoginFlow {
       if (notify) notify({ operation: op, step: "build_session_context" });
       if (op.getStatus().cancelled) throw op.reason;
       
-      const ctx = await this.#buildSessionContext(html, this.#jar);
+      await this.#buildSessionContext(html, this.#jar);
       
       if (notify) notify({ operation: op, step: "create_api_client" });
       if (op.getStatus().cancelled) throw op.reason;
       
-      const apiClient = await this.#createAPIClient(html, this.#jar); // i think this will be attached to fca api options onload
+      const apiClient = await this.#createAPIClient(html, this.#userSessionContext); // i think this will be attached to fca api options onload
       
       if (notify) notify({ operation: op, step: "load_api_functions" });
       if (op.getStatus().cancelled) throw op.reason;
       
-      this.loadAPIFunctions(apiClient, apiFunctions);
+      this.#loadAPIFunctions(apiClient, apiFunctions);
       
       // extras
       this.addAPI("getAppState", LoginHelpers.getAppState);
       
       if (notify) notify({ operation: op, step: "success_login" });
+      if (op.getStatus().cancelled) throw op.reason;
       
-      // Do not confuse apiClient with api, as they serve different purposes. `apiClient` refers to the API client instance, while `api` refers to the API functions loaded into the flow. You want api.
+      const ctx = this.#userSessionContext;
+      console.log("MQTT Region:", ctx.region);
+      console.log("MQTT Endpoint:", ctx.mqttEndpoint);
+      console.log("MQTT Session ID:", ctx.sessionID);
+      console.log("MQTT Web Client ID:", ctx.clientID);
+      console.log("MQTT Web Device ID:", ctx.deviceID);
+      
+      /** Do not confuse apiClient with api, as they serve different purposes. `apiClient` refers to the API client instance, while `api` refers to the API functions loaded into the flow. You want api. */
       return { api: this.api, session: ctx };
     } catch (error) {
       LoginFlow.errorHandler(error);
     }
   }
   
-  async run() {
+  /**
+   * Runs the login flow.
+   * @param {EventBus | EventDomain} bus - The event bus or domain to use for notifications.
+   * @returns {Promise<{ success: boolean, api: import('../types').ApiRegistry['API'], error: Error | null, cancelled: boolean }>} The result of the login flow.
+   */
+  async run(bus) {
     try {
-      const login = await this.#startLoginProcess();
+      const login = await this.#startLoginProcess(bus);
       return { success: true, api: login.api, error: null, cancelled: this.cancelled };
     } catch (err) {
-      return { success: false, error: err, cancelled: this.cancelled };
+      return { success: false, api: this.api, error: err, cancelled: this.cancelled };
     }
   }
 }

@@ -125,7 +125,7 @@ class APIRegistry {
 
   /**
    * Expose the API registry as a frozen object. Contains all APIs added before runtime.
-   * @returns {Readonly<Object<string, Api>>} A frozen object containing the API registry.
+   * @returns {Readonly<{ [name: string]: Api }>} A frozen object containing the API registry.
    */
   expose() {
     return Object.freeze({ ...this.#apis });
