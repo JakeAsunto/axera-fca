@@ -219,11 +219,11 @@ class LoginFlow {
       
       this.#loadAPIFunctions(apiClient, apiFunctions);
       
-      // extras
-      this.addAPI("getAppState", LoginHelpers.getAppState);
-      
       if (notify) notify({ operation: op, step: "success_login" });
       if (op.getStatus().cancelled) throw op.reason;
+      
+      // extras
+      this.addAPI("getAppState", LoginHelpers.getAppState);
       
       const ctx = this.#userSessionContext;
       console.log("MQTT Region:", ctx.region);
