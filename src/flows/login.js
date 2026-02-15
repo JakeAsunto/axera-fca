@@ -225,7 +225,7 @@ class LoginFlow {
       // extras
       this.addAPI("getAppState", LoginHelpers.getAppState);
       
-      const ctx = this.#userSessionContext;
+      const ctx = this.#userSessionContext
       console.log("MQTT Region:", ctx.region);
       console.log("MQTT Endpoint:", ctx.mqttEndpoint);
       console.log("MQTT Session ID:", ctx.sessionID);
